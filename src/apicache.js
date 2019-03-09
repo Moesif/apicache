@@ -35,6 +35,7 @@ function ApiCache() {
     defaultDuration:    3600000,
     enabled:            true,
     appendKey:          [],
+    maxAge:             Number.MAX_SAFE_INTEGER,
     jsonp:              false,
     redisClient:        false,
     headerBlacklist:    [],
@@ -173,7 +174,7 @@ function ApiCache() {
       // add cache control headers
       if (!globalOptions.headers['cache-control']) {
         if(shouldCacheResponse(req, res, toggle)) {
-          res.setHeader('cache-control', 'max-age=' + (duration / 1000).toFixed(0))
+          res.setHeader('cache-control', 'max-age=' + Math.min(globalOptions.maxAge,(duration / 1000).toFixed(0)))
         } else {
           res.setHeader('cache-control', 'no-cache, no-store, must-revalidate')
         }
@@ -225,7 +226,7 @@ function ApiCache() {
 
     Object.assign(headers, filterBlacklistedHeaders(cacheObject.headers || {}), {
       // set properly-decremented max-age header.  This ensures that max-age is in sync with the cache expiration.
-      'cache-control': 'max-age=' + ((duration/1000 - (new Date().getTime()/1000 - cacheObject.timestamp))).toFixed(0)
+      'cache-control': 'max-age=' + Math.min(globalOptions.maxAge, ((duration/1000 - (new Date().getTime()/1000 - cacheObject.timestamp))).toFixed(0))
     })
 
     // only embed apicache headers when not in production environment
